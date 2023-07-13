@@ -14,40 +14,22 @@
 
 #define SA struct sockaddr
 
-int main(int argc, char* argv[]) {
 
-    if (argc != 3) {
-        std::cout << "Usage: " << argv[0] << " <server_ip> <server_port>" << std::endl;
-        // return 1;
-    }
 
+int main(void) {
     std::string server_ip = "127.0.0.1";
     uint16_t server_port = 8080;
 
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_addr.s_addr = inet_addr(server_ip.c_str());
-    serverAddr.sin_port = htons(server_port);
-    serverAddr.sin_family = AF_INET;
-
-    SOCKET_FD sListener = socket(AF_INET, SOCK_STREAM, 0);  
+    SOCKET_FD sListener = create_server_socket(server_ip, server_port);
+    
     if (sListener < 0) {
-        std::cout << "Error creating socket" << std::endl;
-        return 1;
-    }
-
-    if (bind(sListener, (SA*)&serverAddr, sizeof(serverAddr)) < 0) {
-        std::cout << "Error binding socket" << std::endl;
-        return 1;
-    }
-
-    if (listen(sListener, 1) < 0) {
-        std::cout << "Error listening socket" << std::endl;
+        std::cout << "Error creating server socket" << std::endl;
         return 1;
     }
 
     std::cout << "Server listening on port " << server_port << std::endl;
 
-    int connection_s;
+    SOCKET_FD connection_s;
     while (true) {
         connection_s = accept(sListener, NULL, NULL);
         if (connection_s < 0) {
@@ -59,7 +41,7 @@ int main(int argc, char* argv[]) {
 
         MESSAGE_PACKET message;
         while (true) {
-            if (receive_packet(connection_s, &message) < 0) {
+            if (!receive_packet(connection_s, &message)) {
                 std::cout << "Error receiving message" << std::endl;
                 return 1;
             }

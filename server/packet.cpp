@@ -15,7 +15,7 @@ bool process_packet(MESSAGE_PACKET *message) {
 
 bool receive_packet(SOCKET_FD sockfd, MESSAGE_PACKET* buffer) {
     if (recv(sockfd, &buffer->msgSize, sizeof(buffer->msgSize), 0) < 0) {
-        printf("SERVER DISCONNECT\n\n");
+        printf("ERROR RECEIVING PACKET\n\n");
         close(sockfd);
         return false;
     }
@@ -23,7 +23,7 @@ bool receive_packet(SOCKET_FD sockfd, MESSAGE_PACKET* buffer) {
     memset(buffer->msg, 0, sizeof(buffer->msg));
 
     if (recv(sockfd, buffer->msg, buffer->msgSize, 0) < 0) {
-        printf("SERVER DISCONNECT\n\n");
+        printf("ERROR RECEIVING PACKET\n\n");
         close(sockfd);
         return false;
     }

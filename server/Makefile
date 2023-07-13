@@ -5,4 +5,4 @@ all: $(src)
 run: all $(src)
 	./server.exe $(ARGS)
 clean:
-	rm -f server
+	rm -f server.exe

@@ -9,30 +9,10 @@
 #include <sys/types.h>
 
 #include "server.hpp"
+#include "packet.hpp"
+#include "defines.hpp"
 
 #define SA struct sockaddr
-
-/** Formato da mensagem que o cliente troca com o servidor
- * 
- */
-typedef struct {
-    int msgSize;
-    char msg[4097];
-} MessagePacket;
-
-bool processPacket(MessagePacket message) {
-    std::cout << message.msg << std::endl;
-    return true;
-}
-
-
-void send_message(int socket, MessagePacket* message) {
-	int messageSize = strlen(message->msg);
-	send(socket, (char*)&messageSize, sizeof(int), 0);
-	send(socket, (char*)&message->msg, messageSize, 0);
-
-	return;
-}
 
 int main(int argc, char* argv[]) {
 
@@ -49,7 +29,7 @@ int main(int argc, char* argv[]) {
     serverAddr.sin_port = htons(server_port);
     serverAddr.sin_family = AF_INET;
 
-    int sListener = socket(AF_INET, SOCK_STREAM, 0);  
+    SOCKET_FD sListener = socket(AF_INET, SOCK_STREAM, 0);  
     if (sListener < 0) {
         std::cout << "Error creating socket" << std::endl;
         return 1;
@@ -77,32 +57,19 @@ int main(int argc, char* argv[]) {
 
         std::cout << "Client connected" << std::endl;
 
-        MessagePacket message;
+        MESSAGE_PACKET message;
         while (true) {
-            int bytes = recv(connection_s, (char*)&message.msgSize, sizeof(int), 0);
-            if (bytes < 0) {
+            if (receive_packet(connection_s, &message) < 0) {
                 std::cout << "Error receiving message" << std::endl;
                 return 1;
             }
-
-            bytes = recv(connection_s, (char*)&message.msg, message.msgSize, 0);
-            message.msg[message.msgSize] = '\0';
-
-            if (bytes < 0) {
-                std::cout << "Error receiving message" << std::endl;
-                return 1;
-            }
-            if (bytes == 0) {
-                std::cout << "Client disconnected" << std::endl;
-                break;
-            }
-
+            
             std::cout << "Received message: " << message.msg << std::endl;
 
-            processPacket(message);
+            process_packet(&message);
 
             // echo na mensagem
-            send_message(connection_s, &message);
+            send_packet(connection_s, &message);
             memset(message.msg, 0, sizeof(message.msg));
         }
     }

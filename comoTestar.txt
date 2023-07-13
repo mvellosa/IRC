@@ -4,4 +4,4 @@ no terminal do server: (tem que ser feito primeiro para que cliente possa conect
 
 no terminal do cliente:
 > cd /client
-> make run ARGS="<ip> <porta>"
+> make test

@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <unistd.h>
+#include <csignal>
 
 #include "client.hpp"
 #include "packet.hpp"
@@ -22,13 +23,24 @@ void print_help() {
     std::cout << "port: server port number" << std::endl;
 }
 
+void signalHandler( int signum ) {
+    std::cout << "Interrupt signal (" << signum << ") received.\n";
 
+    if (signum == SIGINT) {
+        std::cout << "Ignoring Signal..." << std::endl;
+        return;
+    }
+
+    exit(signum);  
+}
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         std::cout << "Usage: " << argv[0] << " <host> <port>" << std::endl;
         return 1;
     }
+    
+    signal(SIGINT, signalHandler);
 
     std::string ip = argv[1];
     

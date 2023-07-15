@@ -30,7 +30,7 @@ void handle_client(SOCKET_FD connection_s) {
 
         process_packet(&message);
 
-        // echo na mensagem
+        // echo na mensagem (apenas para teste)
         send_packet(connection_s, &message);
         memset(message.msg, 0, sizeof(message.msg));
     }
@@ -67,8 +67,6 @@ int main(void) {
         new_client.port = ntohs(client_addr.sin_port);
 
         std::cout << "Client "<< new_client.ip <<" connected on port "<< new_client.port << std::endl;
-
-        // server.clients.push_back(new_client);
 
         new_client.handler_thread = std::thread(handle_client, new_client.connection_s);
         new_client.handler_thread.detach();

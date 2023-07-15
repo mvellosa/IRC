@@ -8,9 +8,16 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "defines.hpp"
+#include "packet.hpp"
 
-SOCKET_FD create_server_socket(const std::string ip, uint16_t port) {
+Server::Server(std::string ip, uint16_t port) {
+    this->ip = ip;
+    this->port = port;
+    this->is_running = false;
+    this->socket_fd = -1;
+    this->channels = std::vector<Channel>();
+    this->clients = std::vector<Client>();
+
     struct sockaddr_in serverAddr;
     serverAddr.sin_addr.s_addr = inet_addr(ip.c_str());
     serverAddr.sin_port = htons(port);
@@ -19,18 +26,18 @@ SOCKET_FD create_server_socket(const std::string ip, uint16_t port) {
     SOCKET_FD sListener = socket(AF_INET, SOCK_STREAM, 0);  
     if (sListener < 0) {
         std::cout << "Error creating socket" << std::endl;
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     if (bind(sListener, (SA*)&serverAddr, sizeof(serverAddr)) < 0) {
         std::cout << "Error binding socket" << std::endl;
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     if (listen(sListener, 10) < 0) {
         std::cout << "Error listening socket" << std::endl;
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
-    return sListener;
+    this->socket_fd = sListener;
 }

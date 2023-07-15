@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdint>
 #include <cstring>
+#include <vector>
 
 #include <thread>
 #include <unistd.h>
@@ -11,50 +12,70 @@
 #include "server.hpp"
 #include "packet.hpp"
 #include "defines.hpp"
+#include "channel.hpp"
 
 #define SA struct sockaddr
 
+Server server; // instancia global do servidor
+
+void handle_client(Client *client) {
+    MESSAGE_PACKET message;
+    while (server.is_running) {
+        if (!receive_packet(client->connection_s, &message)) {
+            std::cout << "Error receiving message" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        
+        std::cout << "Received message: " << message.msg << std::endl;
+
+        process_packet(&message);
+
+        // echo na mensagem
+        send_packet(client->connection_s, &message);
+        memset(message.msg, 0, sizeof(message.msg));
+    }
+    close(client->connection_s);
+}
 
 
 int main(void) {
-    std::string server_ip = "127.0.0.1";
-    uint16_t server_port = 8080;
+    server = Server("127.0.0.1", 8080);
 
-    SOCKET_FD sListener = create_server_socket(server_ip, server_port);
-    
-    if (sListener < 0) {
+    if (server.socket_fd < 0) {
         std::cout << "Error creating server socket" << std::endl;
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server listening on port " << server_port << std::endl;
+    std::cout << "Server listening on port " << server.port << std::endl;
 
-    SOCKET_FD connection_s;
+    server.is_running = true;
+
     while (true) {
-        connection_s = accept(sListener, NULL, NULL);
-        if (connection_s < 0) {
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_size = sizeof(sockaddr_in);
+
+        Client new_client;
+
+        new_client.connection_s = accept(server.socket_fd, (SA*)&client_addr, &client_addr_size);
+
+        if (new_client.connection_s == -1) {
             std::cout << "Error accepting client" << std::endl;
-            return 1;
+            exit(EXIT_FAILURE);
         }
 
-        std::cout << "Client connected" << std::endl;
+        new_client.ip = inet_ntoa(client_addr.sin_addr);
+        new_client.port = ntohs(client_addr.sin_port);
 
-        MESSAGE_PACKET message;
-        while (true) {
-            if (!receive_packet(connection_s, &message)) {
-                std::cout << "Error receiving message" << std::endl;
-                return 1;
-            }
-            
-            std::cout << "Received message: " << message.msg << std::endl;
+        std::cout << "Client "<< new_client.ip <<" connected on port "<< new_client.port << std::endl;
 
-            process_packet(&message);
+        new_client.handler_thread = std::thread(handle_client, &new_client);
+        new_client.handler_thread.detach();
 
-            // echo na mensagem
-            send_packet(connection_s, &message);
-            memset(message.msg, 0, sizeof(message.msg));
-        }
+        // TODO: adicionar cliente na lista de clientes do servidor
+        // server.clients.push_back(new_client); // ? não funciona
     }
 
+    close(server.socket_fd);
+    server.is_running = false;
     return 0;
 }

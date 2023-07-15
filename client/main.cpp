@@ -60,7 +60,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::thread client_thread(client_handler, sockfd);
+    std::thread connection_thread(client_handler, sockfd);
+    connection_thread.detach();
 
     // loop principal, lê mensagens do usuário e envia para o servidor
     while (true) {
@@ -75,7 +76,6 @@ int main(int argc, char* argv[]) {
         send_packet(sockfd, &packet);
         sleep(1);
     }
-    
 
     return 0;
 }

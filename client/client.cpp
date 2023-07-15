@@ -48,7 +48,7 @@ void client_handler(SOCKET_FD sockfd) {
 
 	while (1) {
         if(!receive_packet(sockfd, &buffer)) {
-            continue;
+            break;
         }
         
 		process_packet(&buffer);

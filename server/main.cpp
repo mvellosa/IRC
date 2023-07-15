@@ -18,10 +18,10 @@
 
 Server server; // instancia global do servidor
 
-void handle_client(Client *client) {
+void handle_client(SOCKET_FD connection_s) {
     MESSAGE_PACKET message;
     while (server.is_running) {
-        if (!receive_packet(client->connection_s, &message)) {
+        if (!receive_packet(connection_s, &message)) {
             std::cout << "Error receiving message" << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -31,10 +31,10 @@ void handle_client(Client *client) {
         process_packet(&message);
 
         // echo na mensagem
-        send_packet(client->connection_s, &message);
+        send_packet(connection_s, &message);
         memset(message.msg, 0, sizeof(message.msg));
     }
-    close(client->connection_s);
+    close(connection_s);
 }
 
 
@@ -68,7 +68,9 @@ int main(void) {
 
         std::cout << "Client "<< new_client.ip <<" connected on port "<< new_client.port << std::endl;
 
-        new_client.handler_thread = std::thread(handle_client, &new_client);
+        // server.clients.push_back(new_client);
+
+        new_client.handler_thread = std::thread(handle_client, new_client.connection_s);
         new_client.handler_thread.detach();
 
         // TODO: adicionar cliente na lista de clientes do servidor

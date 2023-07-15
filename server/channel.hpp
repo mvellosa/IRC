@@ -6,12 +6,15 @@
 #include <thread>
 #include <vector>
 
-struct Client {
+class Client {
+    public:
     std::string username;
     std::string ip;
     uint16_t port;
     SOCKET_FD connection_s;
     std::thread handler_thread;
+
+    Client(){};
 };
 
 class Channel {

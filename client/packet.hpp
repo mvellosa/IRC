@@ -1,21 +1,20 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "defines.hpp"
 
 /** estrutura de um pacote
  */
-typedef struct {
-    uint32_t msgSize;
-    char msg[4097];
-} MESSAGE_PACKET;
+struct MESSAGE_PACKET {
+    std::string msg;
 
-/** processa um pacote
- *  @param message pacote a ser processado
- *  @return true se o pacote foi processado com sucesso, false caso contrário
- */
-bool process_packet(MESSAGE_PACKET *message);
+    MESSAGE_PACKET() {}
+    MESSAGE_PACKET(std::string message) {
+        this->msg = message;
+    }
+};
 
 /** recebe um pacote
  *  @param sockfd socket fd

@@ -12,7 +12,6 @@ class Client {
     std::string ip;
     uint16_t port;
     SOCKET_FD connection_s;
-    std::thread handler_thread;
 
     Client(){};
     Client(SOCKET_FD connection_s, std::string ip, uint16_t port) {

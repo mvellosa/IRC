@@ -51,7 +51,7 @@ void client_handler(SOCKET_FD sockfd) {
             break;
         }
         
-		process_packet(&buffer);
+        std::cout << buffer.msg << std::endl;
 	}
     close(sockfd);
 }

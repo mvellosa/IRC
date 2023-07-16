@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
+#include <map>
+#include <list>
 #include <mutex>
 
 #include <thread>
@@ -18,9 +20,11 @@
 #define SA struct sockaddr
 
 Server 					server; // instancia global do servidor
-std::vector<SOCKET_FD> 	connections;
+// std::vector<SOCKET_FD> 	connections;
+// std::list<Client>       clients;
 std::vector<Channel> 	rooms;
-int						userCounter = 0;
+std::map<int, Client>   clients;
+int						currGeneratedID = 0;
 
 std::string getCurrentTime() {
 	std::time_t currTime = std::time(0);
@@ -44,50 +48,58 @@ std::vector<std::string> stringSplit(std::string str, std::string delimiter) {
 	return splitted;
 }
 
-enum Packet {
-	pChatMessage,
-	pServerMessage,
-	pWarningMessage
-};
-
 void messageHandler(int userID, std::string msg) {
 	std::vector<std::string> splittedMessage = stringSplit(msg, " ");
-	MESSAGE_PACKET messageP;
 
 	if (splittedMessage[0] == "/ping") {
-		messageP = MESSAGE_PACKET("pong");
-		send_packet(&connections[userID], &messageP);
+		MESSAGE_PACKET messageP("pong");
+        send_packet(&clients[userID].connection_s, &messageP);
 		return;
 	}
 
-	messageP = MESSAGE_PACKET(std::to_string(userID) + ": " + msg);
+	MESSAGE_PACKET messageP(std::to_string(userID) + ": " + msg);
 
 	// manda pra todos na rede (menos pro autor da mensagem)
-	for (int currUser = 0; currUser < (int) connections.size(); currUser++) {
+	for (auto &currUser : clients) {
+        int currID = currUser.first;
+
+        Client currClient = currUser.second;
+
+        if (currID == userID || currClient.connection_s == UNUSED_SOCKET)
+            continue;
 		
-		if (currUser == userID || connections[currUser] == UNUSED_SOCKET) // autor da mensagem
-			continue;
-		
-		send_packet(&connections[currUser], &messageP);
+        send_packet(&currClient.connection_s, &messageP);
 	}
 }
+
 void handle_client(int userID) {
     MESSAGE_PACKET message;
     while (server.is_running) {
-        if (!receive_packet(connections[userID], &message)) {
-            std::cout << "Error receiving message" << std::endl;
-            exit(EXIT_FAILURE);
+        std::cout << userID << " waiting for message on socket " << clients[userID].connection_s << std::endl;
+
+        if (!receive_packet(clients[userID].connection_s, &message)) {
+            std::cout << userID << ": Error receiving message" << std::endl;
+            break;
         }
         
-        std::cout << "Received message: " << message.msg << std::endl;
+        std::cout << "Received message from " << userID <<": " + message.msg << std::endl;
 
 		messageHandler(userID, message.msg);
     }
-    close(connections[userID]);
+    close(clients[userID].connection_s);
+    clients.erase(userID);
 }
 
-int main(void) {
-    server = Server("127.0.0.1", 8080);
+#define DEFAULT_PORT 8080
+
+int main(int argc, char* argv[]) {
+    uint16_t port = DEFAULT_PORT;
+
+    if (argc == 2) {
+        port = atoi(argv[1]);
+    }
+
+    server = Server("127.0.0.1", port);
 
     if (server.socket_fd < 0) {
         std::cout << "Error creating server socket" << std::endl;
@@ -103,7 +115,6 @@ int main(void) {
         struct sockaddr_in client_addr;
         socklen_t client_addr_size = sizeof(sockaddr_in);
 
-
         new_connection_s = accept(server.socket_fd, (SA*)&client_addr, &client_addr_size);
 
         if (new_connection_s == -1) {
@@ -115,14 +126,13 @@ int main(void) {
 
         std::cout << "Client "<< new_client.ip <<" connected on port "<< new_client.port << std::endl;
 
-        new_client.handler_thread = std::thread(handle_client, connections.size());
-        new_client.handler_thread.detach();
+        clients[currGeneratedID] = new_client;
+		// connections.push_back(new_connection_s);
 
-		connections.push_back(new_connection_s);
-		userCounter++;
+        std::thread t(handle_client, currGeneratedID);
+        t.detach();
 
-        // TODO: adicionar cliente na lista de clientes do servidor
-        // server.clients.push_back(new_client); // ? não funciona
+		currGeneratedID++;
     }
 
     close(server.socket_fd);

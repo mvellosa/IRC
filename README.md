@@ -13,30 +13,36 @@
 Cliente e servidor necessitam de terminais separados para serem executados.
 ## Cliente
 Para compilar o cliente, dentro do diretorio principal:
-
-> cd client \
+```sh
+cd client
 make all
+```
 
 Para rodar o cliente:
-> make run
-
+```sh
+make run
+```
 &emsp; OU
-
-> ./client
-
+```sh
+./client
+``````
 ## Servidor
 De mesma maneira, para compilar o servidor, dentro do diretorio principal:
-
-> cd server \
+```sh
+cd server
 make all
+```
 
 
 Para rodar o servidor:
-> make run
+```sh
+make run
+```
 
 OU
-
-> ./server
+```sh
+./server
+```
 
 
 # Utilizando a aplicação

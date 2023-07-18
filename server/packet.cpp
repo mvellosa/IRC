@@ -14,8 +14,6 @@ bool process_packet(MESSAGE_PACKET *message) {
 }
 
 bool receive_packet(SOCKET_FD sockfd, MESSAGE_PACKET* receivedMessage) {
-    sleep(1); // TODO: remove this (debug only
-
     int msgSize;
     if (recv(sockfd, &msgSize, sizeof(int), 0) < 0) {
         printf("ERROR RECEIVING PACKET(1)\n\n");
@@ -42,7 +40,7 @@ bool receive_packet(SOCKET_FD sockfd, MESSAGE_PACKET* receivedMessage) {
 void send_packet(SOCKET_FD *sockfd, MESSAGE_PACKET* message) {
     int msgSize = message->msg.size();
 
-    std::cout << "Sending message"<< message->msg.size() << message->msg << std::endl;
+    std::cout << "Sending message: " << message->msg << std::endl;
 
 	send(*sockfd, &msgSize, sizeof(int), 0);
 	send(*sockfd, message->msg.c_str(), msgSize, 0);

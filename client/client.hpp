@@ -12,4 +12,4 @@
  */
 int connect_server(const std::string ip, uint16_t port);
 
-void client_handler(SOCKET_FD sockfd);
+// void client_handler(SOCKET_FD sockfd);

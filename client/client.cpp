@@ -23,7 +23,7 @@ int connect_server(const std::string ip, uint16_t port) {
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         // se falhar, retorna -1
         std::cout << "Socket creation failed..." << std::endl;
-        return -1;
+        return UNUSED_SOCKET;
     }
     // bind do socket
     struct sockaddr_in servaddr;
@@ -37,21 +37,8 @@ int connect_server(const std::string ip, uint16_t port) {
     if (connect(sockfd, (SA*) &servaddr, sizeof(servaddr)) != 0) {
         // se falhar, retorna -1
         std::cout << "Connection with the server failed..." << std::endl;
-        return -1;
+        return UNUSED_SOCKET;
     }
 
     return sockfd;
-}
-
-void client_handler(SOCKET_FD sockfd) {
-    MESSAGE_PACKET buffer;
-
-	while (1) {
-        if(!receive_packet(sockfd, &buffer)) {
-            break;
-        }
-        
-        std::cout << buffer.msg << std::endl;
-	}
-    close(sockfd);
 }

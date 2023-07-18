@@ -1,7 +1,0 @@
-no terminal do server: (tem que ser feito primeiro para que cliente possa conectar)
-> cd /server
-> make run
-
-no terminal do cliente:
-> cd /client
-> make test

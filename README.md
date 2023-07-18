@@ -1,4 +1,4 @@
-# IRC
+# ICMC-connect
  Repositório criado para o projeto IRC da disciplina SSC0142
 
 # Integrantes
@@ -26,26 +26,27 @@ Para rodar o cliente:
 
 ## Servidor
 De mesma maneira, para compilar o servidor, dentro do diretorio principal:
-```
-cd server
+
+> cd server \
 make all
-```
+
 
 Para rodar o servidor:
-```
-make run
-```
+> make run
+
 OU
-```
-./server
-```
+
+> ./server
+
 
 # Utilizando a aplicação
 ## Cliente
 Uma vez rodando, o cliente poderá utilizar os comandos para conectar com o servidor desejado e iniciar a comunicação.\
 Todos comandos são iniciados com o caracter '/', seguido do comando desejado.
 ## Servidor
-O servidor irá rodar em uma porta, por padrão a porta 8080, mas caso outra seja desejada, pode ser passada como argumento na execução do servidor.
+O servidor irá rodar em uma porta \
+padrão: **8080** \
+caso outra seja desejada, pode ser passada como argumento na execução do servidor.
 ```
 ./server <porta>
 ```
@@ -64,6 +65,18 @@ O servidor irá rodar em uma porta, por padrão a porta 8080, mas caso outra sej
 | /unmute | Desmuta um usuário na sala de chat | /unmute <target_username> | ser admin do chat |
 | /whois | Mostra informações de um usuário do chat | /whois <targe_username> | ser admin do chat |
 | /quit | Sai do programa | /quit | Nenhuma |
+
+# Pacote
+## estrutura:
+```C++
+int msg_size;
+char message[msg_size];
+```
+&emsp; Onde:
+- **msg_size**: tamanho da mensagem a ser enviada
+- **message**: mensagem a ser enviada
+
+O processamento de comandos é feito a partir da subdivisião da mensagem em tokens, separados por espaços.
 
 # Ambiente de desenvolvimento
 - Sistema operacional: Pop!_OS 22.04 LTS

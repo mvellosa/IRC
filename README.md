@@ -1,7 +1,18 @@
 # ICMC-connect
- Repositório criado para o projeto IRC da disciplina SSC0142
 
-# Integrantes
+Repositório criado para o projeto IRC da disciplina SSC0142 - do curso de Bacharelado em Ciência da Computação do ICMC - USP.
+
+# Introdução
+
+O projeto consiste em um chat IRC (Internet Relay Chat) que permite a comunicação entre usuários através de um servidor.
+
+A troca de mensagens entre cliente e servidor é realizada por sockets, utilizando o protocolo TCP.
+
+O servidor é responsável por gerenciar as conexões e salas de chat, enquanto o cliente é responsável por enviar e receber mensagens do servidor.
+
+O servidor é capaz de gerenciar múltiplas conexões simultâneas através de threads, e possui um sistema de salas de chat, onde cada sala possui um nome e uma lista de usuários conectados.
+
+# Autores
 - Matheus Vellosa de Andrade - 12421725
 <!-- - Pedro -->
 <!-- - Bruna -->
@@ -9,7 +20,7 @@
 # Video apresentação
 [Link](https://)
 
-# Como executar
+# Executando o projeto
 Cliente e servidor necessitam de terminais separados para serem executados.
 ## Cliente
 Para compilar o cliente, dentro do diretorio principal:
@@ -25,7 +36,7 @@ make run
 &emsp; OU
 ```sh
 ./client
-``````
+```
 ## Servidor
 De mesma maneira, para compilar o servidor, dentro do diretorio principal:
 ```sh

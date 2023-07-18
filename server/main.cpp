@@ -33,6 +33,12 @@ int						        currGeneratedID = 0;
 #define DEFAULT_PORT 8080
 #define MAX_NICKNAME_SIZE 50
 
+#define END_CONNECTION -1
+
+bool is_number(std::string str) {
+    return !str.empty() && str.find_first_not_of("0123456789") == std::string::npos;
+}
+
 std::vector<std::string> stringSplit(std::string str, std::string delimiter) {
 	size_t posStart = 0;
 	size_t posEnd;
@@ -61,8 +67,6 @@ void send_packet_channel(std::string channelName, int userID, std::string messag
         send_packet(&clients[user].connection_s, &messageP);
     }
 }
-
-#define END_CONNECTION -1
 
 int message_controller(int userID, std::string msg) {
 	std::vector<std::string> splittedMessage = stringSplit(msg, " ");
@@ -472,6 +476,10 @@ int main(int argc, char* argv[]) {
     uint16_t port = DEFAULT_PORT;
 
     if (argc == 2) {
+        if (!is_number(argv[1])) {
+            std::cout << "Invalid port number" << std::endl;
+            exit(EXIT_FAILURE);
+        }
         port = atoi(argv[1]);
     }
 

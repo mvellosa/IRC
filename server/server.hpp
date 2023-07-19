@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "defines.hpp"
-// #include "client.hpp"
 #include "channel.hpp"
 
 class Server {
@@ -21,6 +20,3 @@ class Server {
     Server(std::string ip, uint16_t port);
     
 };
-
-
-// SOCKET_FD create_server_socket(const std::string ip, uint16_t port);

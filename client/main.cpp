@@ -6,11 +6,13 @@
 #include <csignal>
 #include <vector>
 #include <map>
+#include <mutex>
 
 #include "client.hpp"
 #include "packet.hpp"
 
 bool client_connected = false;
+std::mutex connection_mutex;
 SOCKET_FD client_s = UNUSED_SOCKET;
 
 struct Command {
@@ -40,6 +42,14 @@ bool is_number(std::string str) {
     return !str.empty() && str.find_first_not_of("0123456789") == std::string::npos;
 }
 
+/** imprime uma mensagem na tela
+ * @param message mensagem a ser impressa
+ */
+void show_message(std::string message) {
+    std::cout << "\t" + message + "\n" << std::endl;
+}
+
+/** inicializa o mapa de comandos */
 void init_commands_info() {
     commands_info["/help"] = Command("/help", "Show this help message", "/help");
     commands_info["/connect"] = Command("/connect", "Connect to a server", "/connect <host> <port>");
@@ -55,26 +65,20 @@ void init_commands_info() {
     commands_info["/quit"] = Command("/quit", "Quit the program", "/quit");
 }
 
+/** imprime a mensagem de ajuda */
 void print_help(void) {
-
-    std::cout << "Available commands:" << std::endl;
+    show_message("Available commands:");
 
     for (auto &currentCommand : commands_info) {
-        std::cout << currentCommand.second.name << " - " << currentCommand.second.description << std::endl;
+        std::cout << "\t" << currentCommand.second.name << " - " << currentCommand.second.description << std::endl;
     }
 }
 
-void signalHandler(int signum) {
-    std::cout << "Interrupt signal (" << signum << ") received.\n";
-
-    if (signum == SIGINT) {
-        std::cout << "Ignoring Signal..." << std::endl;
-        return;
-    }
-
-    exit(signum);  
-}
-
+/** divide uma string com base em um delimitador
+ * @param str string a ser dividida
+ * @param delimiter delimitador
+ * @return vetor de strings com as partes da string original
+ */
 std::vector<std::string> stringSplit(std::string str, std::string delimiter) {
 	size_t posStart = 0;
 	size_t posEnd;
@@ -98,19 +102,25 @@ void client_handler(SOCKET_FD sockfd) {
         }
 
         if (buffer.msg == "DISCONNECTED") {
-            std::cout << "Disconnected from server" << std::endl;
+            show_message("Disconnected from server");
+
             client_connected = false;
             break;
         }
         
-        std::cout << buffer.msg << std::endl;
+        show_message(buffer.msg);
 	}
+
     close(sockfd);
 }
 
 bool process_message(MESSAGE_PACKET *message) {
     // split message
     std::vector<std::string> splittedMessage = stringSplit(message->msg, " ");
+
+    std::string notConnectedMessage = "You are not connected to a server";
+    std::string notInRoomMessage = "You are not in a chat room";
+    std::string wrongUsageBaseMessage = "Incorrect Usage\nUsage: ";
     
     if (splittedMessage[0] == "/help") {
         print_help();
@@ -119,33 +129,33 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/connect") {
         if (splittedMessage.size() != 3) {
-            std::cout << "Usage: /connect <host> <port>" << std::endl;
+            show_message(wrongUsageBaseMessage + commands_info["/connect"].usage);
             return false;
         }
 
         if (client_connected) {
-            std::cout << "Already connected to a server" << std::endl;
+            show_message("Already connected to a server");
             return false;
         }
 
         std::string ip = splittedMessage[1];
         uint16_t port;
         if (!is_number(splittedMessage[2]) || atoi(splittedMessage[2].c_str()) > 0xFFFF) {
-            std::cout << "Invalid port number.\nHas to be a valid number in range (0, 65535)" << std::endl;
+            show_message("Invalid port number.\nHas to be a valid integer smaller than 65535");
             return false;
         }
         port = atoi(splittedMessage[2].c_str());
 
         SOCKET_FD sockfd = connect_server(ip, port);
         if (sockfd == -1) {
-            std::cout << "Failed to connect to server" << std::endl;
+            show_message("Failed to connect to server");
             return false;
         }
 
         client_connected = true;
         client_s = sockfd;
 
-        std::cout << "Connected to server" << ip << ":" << port << "\n" << std::endl;
+        show_message("Connected to server " + ip + ":" + std::to_string(port));
         std::thread connection_thread(client_handler, sockfd);
         connection_thread.detach();
 
@@ -154,21 +164,33 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/disconnect") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
         send_packet(client_s, message);
-
-        MESSAGE_PACKET confirmation;
-        receive_packet(client_s, &confirmation); // wait for disconnect confirmation
 
         return true;
     }
 
     if (splittedMessage[0] == "/ping") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
+            return false;
+        }
+
+        send_packet(client_s, message);
+        return true;
+    }
+
+    if (splittedMessage[0] == "/nickname") {
+        if (!client_connected) {
+            show_message(notConnectedMessage);
+            return false;
+        }
+
+        if (splittedMessage.size() != 2) {
+            show_message(wrongUsageBaseMessage + commands_info["/nickname"].usage);
             return false;
         }
 
@@ -178,12 +200,12 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/join") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
         if (splittedMessage.size() != 2) {
-            std::cout << "Usage: /join <room_name>" << std::endl;
+            show_message(wrongUsageBaseMessage + commands_info["/join"].usage);
             return false;
         }
 
@@ -193,7 +215,7 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/leave") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
@@ -203,12 +225,12 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/mute") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
         if (splittedMessage.size() != 2) {
-            std::cout << commands_info["/mute"].usage << std::endl;
+            show_message(wrongUsageBaseMessage + commands_info["/mute"].usage);
             return false;
         }
 
@@ -218,12 +240,12 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/unmute") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
         if (splittedMessage.size() != 2) {
-            std::cout << commands_info["/unmute"].usage << std::endl;
+            show_message(wrongUsageBaseMessage + commands_info["/unmute"].usage);
             return false;
         }
 
@@ -233,12 +255,12 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/kick") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
         if (splittedMessage.size() != 2) {
-            std::cout << "Usage: /kick <nickname>" << std::endl;
+            show_message(wrongUsageBaseMessage + commands_info["/kick"].usage);
             return false;
         }
 
@@ -248,12 +270,12 @@ bool process_message(MESSAGE_PACKET *message) {
 
     if (splittedMessage[0] == "/whois") {
         if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
+            show_message(notConnectedMessage);
             return false;
         }
 
         if (splittedMessage.size() != 2) {
-            std::cout << "Usage: /whois <nickname>" << std::endl;
+            show_message(wrongUsageBaseMessage + commands_info["/whois"].usage);
             return false;
         }
 
@@ -264,50 +286,34 @@ bool process_message(MESSAGE_PACKET *message) {
     if (splittedMessage[0] == "/quit") {
         if (client_connected) {
             send_packet(client_s, message);
+        }
 
-            MESSAGE_PACKET confirmation;
-            receive_packet(client_s, &confirmation); // wait for disconnect confirmation
-
-            if (confirmation.msg != "DISCONNECTED") {
-                std::cout << "Failed to disconnect from server" << std::endl;
-                std::cout << "received: " << confirmation.msg << std::endl;
+        int retry = 0;
+        while (retry < 5) {
+            if (client_connected) {
+                sleep(1);
+            } else {
+                break;
             }
+        }
 
-            std::cout << "Disconnected from server\n" << std::endl;
-
-            close(client_s);
-            client_connected = false;
-            client_s = UNUSED_SOCKET;
+        if (client_connected) {
+            show_message("Failed to disconnect from server, unsafe quitting.");
         }
 
         exit(EXIT_SUCCESS);
         return true;
     }
 
-    if (splittedMessage[0] == "/nickname") {
-        if (!client_connected) {
-            std::cout << "Not connected to a server" << std::endl;
-            return false;
-        }
-
-        if (splittedMessage.size() != 2) {
-            std::cout << "Usage: /nickname <nickname>" << std::endl;
-            return false;
-        }
-
-        send_packet(client_s, message);
-        return true;
-    }
-
-    // caso onde nenhum comando foi reconhecido
+    // caso onde o usuário digitou um comando inválido
     if (splittedMessage[0].at(0) == '/') {
-        std::cout << "Invalid command" << std::endl;
+        show_message("Invalid command.");
         return false;
     }
 
     // caso onde não é um comando, apenas uma mensagem
     if (!client_connected || client_s == UNUSED_SOCKET) {
-        std::cout << "Not connected to a server" << std::endl;
+        show_message(notConnectedMessage);
         return false;
     }
 
@@ -316,25 +322,44 @@ bool process_message(MESSAGE_PACKET *message) {
     return true;
 }
 
+void signalHandler(int signum) {
+    show_message("Interrupt signal (" + std::to_string(signum) + ") received.");
+
+    if (signum == SIGINT) {
+        show_message("Ignoring Signal...");
+        return;
+    }
+
+    exit(signum);  
+}
+
 int main(void) {
     // registra o handler para o sinal SIGINT
     signal(SIGINT, signalHandler);
 
     init_commands_info();
 
-    std::cout << "Welcome to ICMC-connect, connect to a server to start.\n" 
-     "Type /help to see the available commands" << std::endl;
+    show_message("Welcome to ICMC-connect, connect to a server to start.");
+    show_message("Type /help to see the available commands");
     
     // loop principal, lê mensagens do usuário e envia para o servidor
     while (true) {
         
         std::string message;
         std::getline(std::cin, message);
+        std::cout << std::endl;
+
+        // caso o usuário tenha apertado ctrl+d
+        if (std::cin.eof()) {
+            // por ter o mesmo efeito de /quit, é tratado da mesma forma
+            MESSAGE_PACKET packet("/quit");
+            process_message(&packet);
+            continue;
+        }
 
         MESSAGE_PACKET packet(message);  
 
         process_message(&packet);
-        sleep(1);
     }
 
     return 0;

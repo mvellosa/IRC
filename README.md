@@ -18,7 +18,7 @@ O servidor é capaz de gerenciar múltiplas conexões simultâneas através de t
 - Bruna - 
 
 # Video apresentação
-[Link](https://)
+[Link](https://drive.google.com/file/d/1bGqO4dkzKGwbmfiBefa2WVTEbxjBHJ-s/view?usp=sharing)
 
 # Executando o projeto
 Cliente e servidor necessitam de terminais separados para serem executados.

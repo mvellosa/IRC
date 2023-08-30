@@ -1,10 +1,8 @@
-# ICMC-connect
+# Chat-connect
 
-Repositório criado para o projeto IRC da disciplina SSC0142 - do curso de Bacharelado em Ciência da Computação do ICMC - USP.
+Um IRC (Internet Relay Chat) que segue (com ressalvas) o padrão RFC 1459, permitindo a comunicação entre usuários através de um servidor.
 
 # Introdução
-
-O projeto consiste em um chat IRC (Internet Relay Chat) que permite a comunicação entre usuários através de um servidor.
 
 A troca de mensagens entre cliente e servidor é realizada por sockets, utilizando o protocolo TCP.
 

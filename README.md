@@ -14,8 +14,6 @@ O servidor é capaz de gerenciar múltiplas conexões simultâneas através de t
 
 # Autores
 - Matheus Vellosa de Andrade - 12421725
-- Pedro - 
-- Bruna - 
 
 # Video apresentação
 [Link](https://drive.google.com/file/d/1bGqO4dkzKGwbmfiBefa2WVTEbxjBHJ-s/view?usp=sharing)

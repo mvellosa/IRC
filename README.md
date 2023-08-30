@@ -1,6 +1,6 @@
 # Chat-connect
 
-Um IRC (Internet Relay Chat) que segue o padrão RFC 1459 com algumas adaptações, permitindo a comunicação entre usuários através de um servidor.
+Um IRC (Internet Relay Chat) que segue o padrão RFC 1459 com algumas adaptações, e que permite a comunicação entre usuários através de um servidor.
 
 # Introdução
 
